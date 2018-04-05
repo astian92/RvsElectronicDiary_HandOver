@@ -1,0 +1,32 @@
+﻿@{
+    ViewBag.Title = "Грешка";
+}
+
+<div class="modal inmodal in" tabindex="-1" role="dialog" aria-hidden="true" id="error" style="display: block; padding-right: 17px;">
+    <div class="modal-backdrop  in" style="height: 643px;"></div>
+    <div class="modal-dialog">
+        <div class="modal-content animated bounceInRight">
+
+            <div class="modal-header">
+                <i class="fa fa-exclamation-triangle modal-icon"></i>
+                <h4 class="modal-title">Грешка</h4>
+                <small class="font-bold">Възникна грешка при изтриването на този обект!</small>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Имаше проблем при изтриването на този запис. Моля опитайте пак, или се свържете с Администратор.
+                    
+                </p>
+                <p>
+                    *Съвет: Записът може да е включен в активен дневник.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <div class="form-actions no-color">
+                    <a href="/Home" class="btn btn-white btn-padding-lg">Начало</a>
+                    <a href="@ViewBag.returnUrl" class="btn btn-primary btn-padding-lg">Назад</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

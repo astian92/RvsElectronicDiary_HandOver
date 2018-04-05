@@ -1,0 +1,235 @@
+﻿@model IEnumerable<RED.Models.ElectronicDiary.Protocols.ArchivedProtocol>
+@using RED.Models.ElectronicDiary
+@using System.Collections.Generic
+@using RED.Models
+
+<div class="panel-group" id="accordion_@ViewBag.Label">
+    @foreach (var item in Model)
+    {
+        <div class="panel panel-default">
+            <a data-toggle="collapse" data-parent="#accordion_@ViewBag.Label" href="#@item.DiaryId" aria-expanded="false" class="text-muted collapsed">
+                <div class="panel-heading">
+                    <h5 class="panel-title">
+                        Протокол №: @item.ArchivedDiary.Number /
+                        Дата:  @item.IssuedDate.ToString("dd.MM.yyyy")
+                        <i class="fa fa-archive pull-right"></i>
+                    </h5>
+                </div>
+            </a>
+            <div id="@item.DiaryId" class="panel-collapse collapse" aria-expanded="false" style="height: 0px;">
+                <div class="panel-body">
+                    <div class="animated fadeInDown">
+                        <div class="ibox-content">
+                            <div class="row">
+                                <h4 class="text-navy text-center">Протокол №: @item.ArchivedDiary.Number</h4>
+                            </div>
+
+                            @{
+                                var acredited = item.ProtocolResults.Where(pr => pr.ArchivedProductTest.TestAcredetationLevel.Trim() == AcreditationLevels.Acredited);
+                            }
+
+                            @if (acredited.Count() > 0)
+                            {
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <colgroup>
+                                            <col width="60" />
+                                        </colgroup>
+                                        <tr>
+                                            <td colspan="5">
+                                                <b>Акредитирани (А):</b>
+                                            </td>
+                                            <td>
+                                                <a href="/Files/GetArchivedProtocolFile?archivedDiaryId=@(item.DiaryId)&category=A">Изтегли протокол</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>
+                                                №
+                                                <i class="fa fa-question-circle" title="№ на образеца по входящо-изходящия дневник"></i>
+                                            </th>
+                                            <th>
+                                                Наименувание на показателя
+                                            </th>
+                                            <th>
+                                                Методи
+                                                <i class="fa fa-question-circle" title="Методи-стандартизирани, валидирани, вътрешно-лабораторни"></i>
+                                            </th>
+                                            <th>Резултати от изследването, неопределеност</th>
+                                            <th>
+                                                Стойност на показателя
+                                                <i class="fa fa-question-circle" title="Стойност и допуск на показателя по метода"></i>
+                                            </th>
+                                            <th>Условия на заобикалящата среда</th>
+                                        </tr>
+
+                                        @{
+                                            var orderedAcreditedResults = acredited
+                                                .OrderBy(x => x.ArchivedProductTest.ArchivedProduct.Number)
+                                                .ThenBy(x => x.ArchivedProductTest.TestName)
+                                                .ThenBy(x => x.ResultNumber);
+                                        }
+
+                                        @foreach (var result in orderedAcreditedResults)
+                                        {
+                                            <tr>
+                                                <td>@result.ArchivedProductTest.TestName</td>
+                                                <td>@result.ArchivedProductTest.TestMethods</td>
+                                                <td>
+                                                    @(result.ResultNumber != null ? result.ResultNumber : "")
+                                                </td>
+                                                <td>@result.Results</td>
+                                                <td>@result.ArchivedProductTest.MethodValue</td>
+                                                <td>@result.ArchivedProductTest.TestTemperature</td>
+                                            </tr>
+                                        }
+                                    </table>
+                                </div>
+
+                                <div class="row" style="margin-bottom: 20px;">
+                                    <div class="col-xs-12">
+                                        <h4 class="text-center">Забележки</h4>
+                                        <ul>
+                                            @foreach (var pRemark in item.ArchivedDiary.ArchivedProtocolRemarks.Where(apr => apr.AcredetationLevel.Trim() == AcreditationLevels.Acredited).OrderBy(r => r.Number))
+                                            {
+                                                <li><p>@pRemark.Remark</p></li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            }
+
+                            @{
+                                var notAcredited = item.ProtocolResults.Where(pr => pr.ArchivedProductTest.TestAcredetationLevel.Trim() == AcreditationLevels.NotAcredited);
+                            }
+
+                            @if (notAcredited.Count() > 0)
+                            {
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <colgroup>
+                                            <col width="60" />
+                                        </colgroup>
+                                        <tr>
+                                            <td colspan="5">
+                                                <b>Не акредитирани (Б):</b>
+                                            </td>
+                                            <td>
+                                                <a href="/Files/GetArchivedProtocolFile?archivedDiaryId=@(item.DiaryId)&category=B">Изтегли протокол</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>
+                                                №
+                                                <i class="fa fa-question-circle" title="№ на образеца по входящо-изходящия дневник"></i>
+                                            </th>
+                                            <th>
+                                                Наименувание на показателя
+                                            </th>
+                                            <th>
+                                                Методи
+                                                <i class="fa fa-question-circle" title="Методи-стандартизирани, валидирани, вътрешно-лабораторни"></i>
+                                            </th>
+                                            <th>Резултати от изследването, неопределеност</th>
+                                            <th>
+                                                Стойност на показателя
+                                                <i class="fa fa-question-circle" title="Стойност и допуск на показателя по метода"></i>
+                                            </th>
+                                            <th>Условия на заобикалящата среда</th>
+                                        </tr>
+
+                                        @{
+                                            var orderedNotAcreditedResultsMKB = notAcredited
+                                                .OrderBy(x => x.ArchivedProductTest.ArchivedProduct.Number)
+                                                .ThenBy(x => x.ArchivedProductTest.TestName)
+                                                .ThenBy(x => x.ResultNumber);
+                                        }
+
+                                        @foreach (var result in orderedNotAcreditedResultsMKB)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    @(result.ResultNumber != null ? result.ResultNumber : "")
+                                                </td>
+                                                <td>@result.ArchivedProductTest.TestName</td>
+                                                <td>@result.ArchivedProductTest.TestMethods</td>
+                                                <td>@result.Results</td>
+                                                <td>@result.ArchivedProductTest.MethodValue</td>
+                                                <td>@result.ArchivedProductTest.TestTemperature</td>
+                                            </tr>
+                                        }
+                                    </table>
+                                </div>
+
+                                <div class="row" style="margin-bottom: 20px;">
+                                    <div class="col-xs-12">
+                                        <h4 class="text-center">Забележки</h4>
+                                        <ul>
+                                            @foreach (var pRemark in item.ArchivedDiary.ArchivedProtocolRemarks.Where(apr => apr.AcredetationLevel.Trim() == AcreditationLevels.NotAcredited))
+                                            {
+                                                <li><p>@pRemark.Remark</p></li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="status-container">
+                                <h5>Извършил изпитването (ФЗХ): <strong>@item.Tester</strong></h5>
+                                <h5>Ръководител: <strong>@item.LabLeader</strong></h5>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
+
+<div class="custom-pagination pull-right">
+
+</div>
+
+<script src="~/Scripts/Our/CustomPagination.js"></script>
+
+<script>
+    var pagination = new CustomPagination({
+        startPage: @ViewBag.page,
+        clickBack: function (arguments, page) {
+            changePage(page);
+        },
+        //clickBackArguments: ["http://prev", '1'],
+        clickNext: function (arguments, page) {
+            changePage(page);
+        },
+        //clickNextArguments: ["http://next", '2'],
+        onPageInputChange: function (arguments, page) {
+            changePage(page);
+        },
+        //changePageFieldArguments: ["argument1", "argument2" ...]
+    });
+
+    pagination.Create(".custom-pagination");
+
+    function changePage(page) {
+        var data = GetFilters();
+        data.page = page;
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            url: url,
+            data: data,
+            success: function (result) {
+                $('.' + tabId).html(result);
+            },
+            error: function () {
+                var errorMsg = $("<div class='req-error-msg'>Възникна проблем при зареждането на заявките</div>");
+                $('.' + tabId).html(errorMsg);
+            }
+        });
+    }
+</script>

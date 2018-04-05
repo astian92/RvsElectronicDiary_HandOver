@@ -1,0 +1,159 @@
+﻿@*@model IEnumerable<RED.Models.ElectronicDiary.Tests.TestW>*@
+@using RED.Helpers
+
+@{
+    ViewBag.Title = "Tests";
+}
+
+<link href="~/Content/plugins/dataTables/dataTables.bootstrap.css" rel="stylesheet" />
+<link href="~/Content/plugins/dataTables/dataTables.responsive.css" rel="stylesheet" />
+<link href="~/Content/plugins/dataTables/dataTables.tableTools.min.css" rel="stylesheet" />
+<link href="~/Content/Our/datatables-changes.css" rel="stylesheet" />
+
+<script src="~/Scripts/plugins/dataTables/jquery.dataTables.js"></script>
+<script src="~/Scripts/plugins/dataTables/dataTables.bootstrap.js"></script>
+<script src="~/Scripts/plugins/dataTables/dataTables.responsive.js"></script>
+<script src="~/Scripts/plugins/dataTables/dataTables.tableTools.min.js"></script>
+<script src="~/Scripts/Helpers/myDataTablesWrapper.js"></script>
+
+<h2>Изследвания</h2>
+
+<p>
+    <a href="/Tests/Create">
+        <i class="fa fa-plus"></i>
+        Добави изследване
+    </a>
+</p>
+<div class="row">
+    <div class="ibox float-e-margins">
+        <div class="ibox-content table-responsive">
+            <table id="TestsTable" class="display table table-striped table-bordered table-hover dataTables-example dataTable dtr-inline" style="min-width: 100%">
+                <thead>
+                    <tr>
+                        <th>Вид</th>
+                        <th>Име</th>
+                        @*<th>Методи</th>*@
+                        <th>Ниво</th>
+                        <th>Единица на величината</th>
+                        <th>Температура</th>
+                        <th>Категория</th>
+                        @if (Html.IsAuthorized(FeaturesCollection.ModifyTests))
+                        {
+                            <th></th>
+                        }
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    Tables.CreateTable("#TestsTable", {
+        serverSide: true,
+        order: [],
+        lengthChange: false,
+        selectable: false,
+        paging: true,
+        pageLength: 10,
+        "language": {
+            "paginate": {
+                "previous": "Назад",
+                "next": "Напред"
+            },
+            "zeroRecords": "Няма налични данни",
+            "info": "Показва _START_ до _END_ от _MAX_ записа",
+            "infoFiltered": "(филтрирани от общо _MAX_)",
+            "infoEmpty": "Няма открити данни"
+        },
+        ajax: {
+            type: "POST",
+            url: "/Tests/GetTests",
+        },
+        columns: [
+            { "data": "TestType" },
+            { "data": "Name" },
+            //{ "data": "TestMethods" },
+            { "data": "Level" },
+            { "data": "UnitName" },
+            { "data": "Temperature" },
+            { "data": "Category" },
+            @if (Html.IsAuthorized(FeaturesCollection.ModifyTests))
+            {
+            <text>
+            { "data": "Id" }
+            </text>
+            }
+        ],
+        columnDefs: [
+            @if (Html.IsAuthorized(FeaturesCollection.ModifyTests))
+            {
+                <text>
+            {
+                targets: -1,
+                sortable: false,
+                render: function (data, type, row) {
+                    return '<a href="/Tests/Edit?id=' + data + '">\
+                                <i class="fa fa-edit"></i>\
+                                Промени\
+                            </a>|\
+                            <a class="btn-delete" href="' + data + '" data-toggle="modal" data-target="#myModal" onclick="Delete(this)">\
+                                <i class="fa fa-trash"></i>\
+                                Изтрий\
+                            </a>'
+                },
+                class: "text-center",
+                width: "170px"
+            },
+                </text>
+            }
+            {
+                targets: -2,
+                visible: false
+            },
+            {
+                targets: 1,
+                width: "400px"
+            },
+            {
+                targets: 3, 
+                width: "100px"
+            }
+        ],
+        "drawCallback": function (settings) {
+            var api = this.api();
+            var rows = api.rows({ page: 'current' }).nodes();
+            var last = null;
+
+            api.column(5, { page: 'current' }).data().each(function (group, i) {
+                if (last !== group) {
+                    $(rows).eq(i).before(
+                        '<tr class="group"><td colspan="7">' + group + '</td></tr>'
+                    );
+
+                    last = group;
+                }
+            });
+        }
+    });
+
+    function Delete(btn) {
+        var id = $(btn).attr('href');
+        var url = '/Tests/Delete?id=' + id;
+        $.ajax({
+            type: "GET",
+            url: url,
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (view) {
+                $('.modal-content').html(view);
+            }
+        });
+    }
+</script>
+<div class="modal inmodal" tabindex="-1" role="dialog" aria-hidden="true" id="myModal">
+    <div class="modal-dialog">
+        <div class="modal-content animated bounceInRight">
+        </div>
+    </div>
+</div>

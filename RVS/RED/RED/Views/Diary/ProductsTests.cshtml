@@ -1,0 +1,216 @@
+﻿@model IEnumerable<SimpleProduct>
+@using RED.Models.ElectronicDiary;
+@using RED.Models;
+
+@foreach (var product in Model)
+{
+    <div class="row">
+        <div class="col-lg-6">
+            <h3>@product.Name</h3>
+            <div class="form-group">
+                <label for="Tests">Тест</label>
+                @Html.DropDownList("Tests", null, htmlAttributes: new { @class = "form-control tests chosen-select" })
+            </div>
+            <div class="form-group">
+                <label for="TestMethodId">Метод</label>
+                <select name="TestMethods" class="form-control testMethods"></select>
+            </div>
+            <div class="form-group">
+                <label class="control-label" for="Units">Единици</label>
+                <input class="form-control text-box single-line valid unitBox" data-val-range="Невалиден номер" data-val-range-max="2147483647" data-val-range-min="0" id="Products[0].ProductTests[0].Units" name="LetterNumber" type="number" value="">
+                <span class="text-danger field-validation-error" data-valmsg-replace="true"><span class="units-name-validation collapse">Единиците са задължителни</span></span>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label" for="methodValueBox">Стойност на показателя</label>
+                <textarea id="methodValueBox-@product.Key" class="form-control no-resize methodValueBox"></textarea>
+                <span class="special-chars-holder pull-right">
+                    <input type="button" value="±" class="btn btn-xs btn-info" onclick="addSign(this)" for="methodValueBox-@product.Key" tabindex="-1" />
+                    <input type="button" value="°" class="btn btn-xs btn-info" onclick="addSign(this)" for="methodValueBox-@product.Key" tabindex="-1" />
+                </span>
+                <span class="text-danger field-validation-error" data-valmsg-replace="true"><span class="methodValue-validation collapse">Стойност на показателя е задължителен!</span></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label" for="">Забележка</label>
+                <textarea class="form-control no-resize remarkBox"></textarea>
+            </div>
+
+            <div class="form-group" key="@product.Key">
+                <input type="button" value="Добави" class="add-test-btn btn btn-primary" tabindex="5" />
+            </div>
+        </div>
+        <div class="col-lg-6 test-list-table-container">
+            <table class="table table-hover test-list-table" style="margin-top:54px;">
+                <tbody>
+                    @if (product.Tests.Count > 0)
+                    {
+                        foreach (var test in product.Tests)
+                        {
+                            <tr>
+                                <td>
+                                    @if (test.Type == TestTypes.MKB)
+                                    { <span class="label label-primary">МКБ</span> }
+                                    else
+                                    { <span class="label label-warning">ФЗХ</span> }
+                                </td>
+                                <td colspan="2">
+                                    <div class="col-md-11 test">
+                                        @test.Name
+                                    </div>
+                                    <div class="col-md-1">
+                                        @test.Units
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p style="margin-top:10px;">@test.MethodValue</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p style="margin-top:10px;">@test.Remark</p>
+                                    </div>
+                                </td>
+                                <td class="text-right">
+                                    <a class="delete-product" key="@test.Key" onclick="deleteTest(this)">
+                                        <h3 style="margin: 0px">x</h3>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+            <span class="text-danger field-validation-error" data-valmsg-for="test-list-table" data-valmsg-replace="true"><span class="test-list-validation collapse">Въведете поне един тест!</span></span>
+        </div>
+    </div>
+}
+
+<script>
+    $(document).ready(function () {
+        var testDropDowns = $('.tests');
+        testDropDowns.each(function () {
+            loadTestMethods(this);
+            loadTestMethodValue(this);
+        });
+    });
+
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+
+    $('.add-test-btn').on('click', function () {
+        var productKey = $(this).parent().attr('key');
+        var testKey = guid();
+
+        var groupParent = $(this).parent().parent();
+
+        var unitBox = groupParent.find('.unitBox');
+        var methodValueBox = groupParent.find('.methodValueBox');
+        var remarkBox = groupParent.find('.remarkBox');
+        var units = unitBox.val();
+        var methodValue = groupParent.find('.methodValueBox').val();
+        var remark = groupParent.find('.remarkBox').val();
+
+        var validForm = true;
+        if (units == '') {
+            groupParent.find('.units-name-validation').removeClass('collapse');
+            validForm = false;
+        }
+
+        if (methodValue == '') {
+            groupParent.find('.methodValue-validation').removeClass('collapse');
+            validForm = false;
+        }
+
+        if (!validForm) {
+            return false;
+        }
+
+        var testsDd = groupParent.find('.tests option:selected');
+        var testMethodDd = groupParent.find('.testMethods option:selected');
+        var selectedTestValue = testsDd.val();
+        var selectedTestMethodValue = testMethodDd.val();
+        var array = selectedTestValue.split('_');
+        var selectedTestType = array[0];
+        var selectedTestId = array[1];
+        var selectedTestMethodId = selectedTestMethodValue;
+        var selectedTestText = testsDd.text();
+        //console.log(selectedTestId, selectedTestText);
+
+        var labelColor = 'label-primary';
+        if (selectedTestType == 'ФЗХ')
+            labelColor = 'label-warning';
+
+        var content = '<tr><td><span class="label ' + labelColor + '">' + selectedTestType + '</span></td>' +
+            '<td colspan="2"><div class="col-md-11 test">' +
+                selectedTestText + '</div><div class="col-md-1">' +
+                units + '</div><div class="col-md-6"><p style="margin-top:10px;">' + methodValue + '</p></div><div class="col-md-6"><p style="margin-top:10px;">' + remark + '</p></div><td class="text-right">' +
+                '<a class="delete-product" key="' + testKey + '" onclick="deleteTest(this)"><h3 style="margin: 0px">x</h3></a></td></tr>';
+
+        groupParent.parent().find('.test-list-table tbody').append(content);
+        unitBox.val('');
+        methodValueBox.val('');
+        remarkBox.val('');
+        groupParent.find('.units-name-validation').addClass('collapse');
+        $('.current').removeClass('error');
+
+        //CONTINUE WITH ADDING THIS INFORMATION IN THE PRODUCTS TABLE
+        //console.log($('.product'));
+
+        var testsHolder = $('<span class="test" id="' + testKey + '"></span>');
+        var testIdInput = $('<input type="hidden" class="testId" value="' + selectedTestId + '" />');
+        var testMethodIdInput = $('<input type="hidden" class="testMethodId" value="' + selectedTestMethodId + '" />');
+        var unitsInput = $('<input type="hidden" class="units" value="' + units + '" />');
+        var testNameInput = $('<input type="hidden" class="name" value="' + selectedTestText + '" />');
+        var testTypeInput = $('<input type="hidden" class="type" value="' + selectedTestType + '" />')
+        var methodValueInput = $('<input type="hidden" class="methodValue" value="' + methodValue + '" />')
+        var remarkInput = $('<input type="hidden" class="remark" value="' + remark + '" />')
+
+        testsHolder.append(testIdInput);
+        testsHolder.append(testMethodIdInput);
+        testsHolder.append(unitsInput);
+        testsHolder.append(testNameInput);
+        testsHolder.append(testTypeInput);
+        testsHolder.append(methodValueInput);
+        testsHolder.append(remarkInput);
+
+        var product;
+        var products = $('.product');
+
+        for (var i = 0; i < products.length; i++) {
+            var p = products[i];
+            if ($(p).attr('key') == productKey) {
+                product = p;
+                break;
+            }
+        }
+
+        if (product) {
+            $(product).append(testsHolder);
+            var errorMsg = groupParent.parent().find('.test-list-table .error-msg');
+            errorMsg.remove();
+        }
+    });
+
+    $('.unitBox').on('input', function () {
+        if ($(this).val() != '') {
+            $(this).parent().parent().find('.units-name-validation').addClass('collapse');
+        }
+    })
+
+    $('.methodValueBox').on('input', function () {
+        if ($(this).val() != '') {
+            $(this).parent().parent().find('.methodValue-validation').addClass('collapse');
+        }
+    })
+
+    $('.tests').on('change', function () {
+        loadTestMethods(this);
+        loadTestMethodValue(this);
+    });
+</script>
